@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 #include "TrackHandler.h"
 TrackHandler::TrackHandler() {
 
@@ -108,3 +108,4 @@ void TrackHandler::timerCallback() {
 	}
 	timeCount++;
 }
+*/

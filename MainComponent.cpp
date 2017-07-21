@@ -1,33 +1,37 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "MainComponent.h"
 #include "MPEHandler.h"
+#include "SynthVoice.h"
+
 
 MainContentComponent::MainContentComponent() {
 
 	windowWidth = 1000;
 	windowHeight = 800;
+	timeInterval = 10;
+	started = false;
 	startToggleClicksCount = 0;
 	defaultButtonColour = Colours::cadetblue;
-	MPEHandle = new MPEHandler();
+	MPEHandle = new MPEHandler(this);
 	
 	setSize(windowWidth, windowHeight);
 	audioDevManager.initialise(0, 2, nullptr, true, String(), nullptr);
 	audioDevManager.addMidiInputCallback(String(), this);
+	//audioDevManager.addAudioCallback(this);
 	StringArray devices = MidiInput::getDevices();
 	deviceName = (devices.size() > 0) ? devices[0] : "";
 	audioDevManager.setMidiInputEnabled(deviceName, true);
 
-	
-	MPEHandle->getMC(this);
 	visInstrument.addListener(MPEHandle);
-	visInstrument.enableLegacyMode(24);
+	
 
 	/*for (int i = 0; i < 15; ++i) {
-		synthesiser.addVoice(new MPESynthVoice);
+		synthesiser.addVoice(new SynthVoice);
 	}
 
-	synthesiser.enableLegacyMode(24);
-	synthesiser.setVoiceStealingEnabled(false);*/
+	synthesiser.enableLegacyMode(24);*/
+	visInstrument.enableLegacyMode(24);
+	//synthesiser.setVoiceStealingEnabled(false);
 
 	initUIElements();
 	
@@ -49,7 +53,7 @@ void MainContentComponent::initUIElements() {
 	int buttonHeight = 30;
 	int buttonSpacing = 10;
 	int buttonPosY = 60;
-	int buttonCount = 4;
+	int buttonCount = 5;
 	int buttonTotalArea = buttonCount*(buttonWidth + buttonSpacing);
 	int buttonPosX = windowWidth/2 - buttonTotalArea/2;
 
@@ -68,14 +72,19 @@ void MainContentComponent::initUIElements() {
 	startToggleOption = addButton("Start", "start", Rectangle<int>(buttonPosX, buttonPosY, buttonWidth, buttonHeight), defaultButtonColour);
 	startToggleOption->addListener(this);
 
+	buttonPosX += buttonWidth + buttonSpacing;
+	clearGraphicsOption = addButton("Clear", "clear_graphics", Rectangle<int>(buttonPosX, buttonPosY, buttonWidth, buttonHeight), defaultButtonColour);
+	clearGraphicsOption->addListener(this);
+
+	
 
 	const double visFullWidthPercent = 1;
 	const double visFullHeightPercent = 20;
 	const double viewPortHeightPercent = 0.8;
 	const double viewPortWidthPercent = 1;
 
-	double visActualWidth = (visFullWidthPercent * windowWidth);
-	double visActualHeight = visFullHeightPercent * windowHeight;
+	visActualWidth = (visFullWidthPercent * windowWidth);
+	visActualHeight = visFullHeightPercent * windowHeight;
 	double viewPortActualWidth = (viewPortWidthPercent * windowWidth);
 	double viewPortActualHeight = (viewPortHeightPercent * windowHeight);
 
@@ -83,9 +92,7 @@ void MainContentComponent::initUIElements() {
 
 	visualiserView.setBounds(0,windowHeight-viewPortActualHeight,viewPortActualWidth,viewPortActualHeight);
 	MPEHandle->visualiser->setBounds(Rectangle<int>(visActualWidth,visActualHeight));
-	MPEHandle->visualiser->getVP(&visualiserView);
 	visualiserView.setScrollBarsShown(false, false, true, false);
-	visualiserView.setViewedComponent(MPEHandle->visualiser, false);
 	visualiserView.setViewPositionProportionately(0.5, 0.0);
 	addAndMakeVisible(visualiserView);
 
@@ -101,11 +108,11 @@ void  MainContentComponent::buttonClicked(Button* button) {
 		MPEHandle->trackHandle->saveTrackAsText(fileToSave);
 	}else if (buttonName == "start") {
 		if (startToggleClicksCount % 2 == 0) {
-			MPEHandle->start();
+			start();
 			startToggleOption->setColour(TextButton::buttonColourId, Colours::orangered);
 			startToggleOption->setButtonText("Stop");
 		}else {
-			MPEHandle->stop();
+			stop();
 			startToggleOption->setColour(TextButton::buttonColourId, defaultButtonColour);
 			startToggleOption->setButtonText("Start");
 		}
@@ -118,6 +125,10 @@ void  MainContentComponent::buttonClicked(Button* button) {
 			loadTrackOption->setButtonText("Loaded :)");
 		}
 	}
+	else if (buttonName == "clear_graphics") {
+		MPEHandle->visualiser->clearGraphics();
+		MPEHandle->visualiser = new Visualiser(this);
+	}
 }
 void MainContentComponent::paint(Graphics& g) {
 	g.setFont(Font(16.0f));
@@ -127,6 +138,59 @@ void MainContentComponent::paint(Graphics& g) {
 	
 }
 
+
+void  MainContentComponent::start() {
+	MPEHandle->visualiser->startTimer(timeInterval);
+	if (MPEHandle->trackHandle->isLoadingFile == true) {
+		Logger::outputDebugString("IS LOADING AND tIMER STAT");
+		MPEHandle->trackHandle->startTimer(timeInterval);
+		MPEHandle->trackHandle->isLoadingFile = false;
+		MPEHandle->mainComponent->loadTrackOption->setColour(TextButton::buttonColourId, defaultButtonColour);
+		loadTrackOption->setButtonText("Load Track");
+	}
+	started = true;
+}
+void  MainContentComponent::stop() {
+	if (MPEHandle->visualiser->isTimerRunning()) { MPEHandle->visualiser->stopTimer(); }
+	if (MPEHandle->trackHandle->isTimerRunning()) { MPEHandle->trackHandle->stopTimer(); }
+	startToggleOption->setButtonText("Start");
+	startToggleOption->setColour(TextButton::buttonColourId, defaultButtonColour);
+	started = false;
+}
+
+
+/*
+void MainContentComponent::audioDeviceIOCallback(const float** , int,
+	float** outputChannelData, int numOutputChannels,
+	int numSamples)
+{
+	// make buffer
+	AudioBuffer<float> buffer(outputChannelData, numOutputChannels, numSamples);
+
+	// clear it to silence
+	buffer.clear();
+
+	MidiBuffer incomingMidi;
+
+	// get the MIDI messages for this audio block
+	midiCollector.removeNextBlockOfMessages(incomingMidi, numSamples);
+
+	// synthesise the block
+	synthesiser.renderNextBlock(buffer, incomingMidi, 0, numSamples);
+}
+
+
+void MainContentComponent::audioDeviceAboutToStart(AudioIODevice* device)
+{
+	const double sampleRate = device->getCurrentSampleRate();
+	midiCollector.reset(sampleRate);
+	synthesiser.setCurrentPlaybackSampleRate(sampleRate);
+}
+
+void MainContentComponent::audioDeviceStopped()
+{
+}
+*/
 void MainContentComponent::output(String msg) {
 	Logger::outputDebugString(msg);
 }
@@ -148,8 +212,9 @@ File MainContentComponent::showFileBrowser(String type, String fileTypeEnding) {
 }
 
 void MainContentComponent::handleIncomingMidiMessage(MidiInput*, const MidiMessage& message) {
-	if (MPEHandle->started == true) {
+	if (started == true) {
 		visInstrument.processNextMidiEvent(message);
+		//midiCollector.addMessageToQueue(message);
 	}
 }
 

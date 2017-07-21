@@ -1,16 +1,19 @@
 #pragma once
-
 class TrackHandler: public Timer{
 	public:
 		vector<MPENote> playedNotes;
 		vector<int> playedNoteTimes;
 		StringArray trackData;
 		Visualiser* visualiser;
-		//MPEHandler* MPEHandle;
 
 		int timeCount = 0;
 		int noteCount = 1;
 		bool isLoadingFile = false;
+
+		MainContentComponent *mainComponent;
+		TrackHandler(MainContentComponent *mainComp) {
+			mainComponent = mainComp;
+		}
 
 		void saveTrackAsText(File fileToSave) {
 			Logger::outputDebugString("saving as text....");
@@ -54,7 +57,6 @@ class TrackHandler: public Timer{
 
 		void loadTrackFromText(File FileToOpen,Visualiser *vis) {
 			visualiser = vis;
-			//MPEHandle = mpeHand;
 			playedNotes.clear();
 			playedNoteTimes.clear();
 			String trackDataStr = FileToOpen.loadFileAsString();
@@ -100,17 +102,29 @@ class TrackHandler: public Timer{
 				}
 				localCount++;
 			}
+
+			Logger::outputDebugString(String(playedNoteTimes.size()));
 		}
 
 		void timerCallback() override {
 			for (int i = 0;i < playedNoteTimes.size();i++) {
 				if (playedNoteTimes[i] == timeCount) {
 					visualiser->drawNote(playedNotes[i]);
+					/*MidiMessage message;
+					message.setChannel(playedNotes[i].midiChannel);
+					message.setNoteNumber(playedNotes[i].initialNote);
+					message.setVelocity(playedNotes[i].noteOnVelocity.asUnsignedFloat());
+					message.set
+					*/
+					//mainComponent->synthesiser.noteAdded(playedNotes[i]);
+					//mainComponent->midiCollector.addMessageToQueue(message);
 				}
-				if (i == playedNoteTimes.size() - 1) {
-					//MPEHandle->stop();
+				if (timeCount == playedNoteTimes[playedNoteTimes.size()-1]) {
+					mainComponent->stop();
+					break;
 				}
 			}
+			
 			timeCount++;
 		}
 };

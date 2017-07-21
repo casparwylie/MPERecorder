@@ -15,7 +15,7 @@ class visNote : public Component {
 			int size = (notePressure * 100);
 			size = (size < 5) ? 5 : size;
 			uint8 red = uint8(notePressure*255);
-			uint8 green = uint8(noteTimbre*255);
+			uint8 green = uint8(255 - noteTimbre*255);
 			uint8 blue = uint8(notePitchBend*255);
 			g.setColour(Colour(red,green,blue));
 			g.drawEllipse(5, 5, size, size, (noteTimbre*10)+2);
@@ -26,7 +26,6 @@ class Visualiser : public Component,
 				   public Timer
 				   {
 	public: 
-		Viewport *visualiserView;
 		Image visImage;
 		vector<MPENote> playedNotes;
 		vector<int> noteTimes;
@@ -43,8 +42,13 @@ class Visualiser : public Component,
 		int heighestX = 0;
 		int scrollStep = 513;
 		int lastDrawnY = 0;
-		Visualiser() {
+		MainContentComponent *mainComponent;
+
+		Visualiser(MainContentComponent *mainComp) {
+			mainComponent = mainComp;
 			visImage = Image(Image::RGB, 500, 500, true);
+			mainComponent->visualiserView.setViewedComponent(this, false);
+			setBounds(Rectangle<int>(mainComponent->visActualWidth, mainComponent->visActualHeight));
 		}
 		void paint(Graphics& g) override{
 			g.fillAll(Colours::white);
@@ -55,12 +59,13 @@ class Visualiser : public Component,
 			yPos = yPos + timeSen;
 			int viewPosY = yPos+100;
 			if (yPos % scrollStep == 0) {
-				visualiserView->autoScroll(0, yPos+scrollStep, 1000, scrollStep);
+				mainComponent->visualiserView.autoScroll(0, yPos+scrollStep, 1000, scrollStep);
 			}
 		}
 
-		void getVP(Viewport *viewPort) {
-			visualiserView = viewPort;
+		void clearGraphics() {
+			mainComponent->stop();
+			delete this;
 		}
 
 		void saveGraphicsAsImage(File fileToSave) {

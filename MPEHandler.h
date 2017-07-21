@@ -6,36 +6,15 @@ class MPEHandler : public Component,
 	public:
 
 		bool started = false;
-		int timeInterval = 10;
-		Visualiser *visualiser = new Visualiser();
-		TrackHandler *trackHandle = new TrackHandler();
-		MPEHandler() {
-
-		}
+		
+		Visualiser *visualiser;
+		TrackHandler *trackHandle;
 		MainContentComponent *mainComponent;
-
-		void getMC(MainContentComponent *mainContentComponent){
-			mainComponent = mainContentComponent;
+		MPEHandler(MainContentComponent *mainComp) {
+			mainComponent = mainComp;
+			visualiser = new Visualiser(mainComponent);
+			trackHandle = new TrackHandler(mainComponent);
 		}
-
-		void start() {
-			visualiser->startTimer(timeInterval);
-			if (trackHandle->isLoadingFile == true) {
-				trackHandle->startTimer(timeInterval);
-				trackHandle->isLoadingFile = false;
-				mainComponent->loadTrackOption->setColour(TextButton::buttonColourId,mainComponent->defaultButtonColour);
-				mainComponent->loadTrackOption->setButtonText("Load Track");
-			}
-			started = true;
-		}
-		void stop() {
-			if (visualiser->isTimerRunning()) { visualiser->stopTimer(); }
-			if (trackHandle->isTimerRunning()) { trackHandle->stopTimer(); }
-			mainComponent->startToggleOption->setButtonText("Start");
-			mainComponent->startToggleOption->setColour(TextButton::buttonColourId, mainComponent->defaultButtonColour);
-			started = false;
-		}
-
 		void recievedMidiMiddleProcess(MPENote note){
 			struct DrawCallback : public CallbackMessage
 			{
