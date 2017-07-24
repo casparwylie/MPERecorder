@@ -4,7 +4,8 @@
 #include "SynthVoice.h"
 
 
-MainContentComponent::MainContentComponent() {
+MainContentComponent::MainContentComponent()
+{
 
 	windowWidth = 1000;
 	windowHeight = 800;
@@ -37,7 +38,8 @@ MainContentComponent::MainContentComponent() {
 	
 }
 
-ScopedPointer<TextButton> MainContentComponent::addButton(String text, String name, Rectangle<int>  bounds, Colour colour) {
+ScopedPointer<TextButton> MainContentComponent::addButton(String text, String name, Rectangle<int>  bounds, Colour colour)
+{
 	ScopedPointer<TextButton> button = new TextButton(String());
 	button->setButtonText(text);
 	button->setBounds(bounds);
@@ -47,7 +49,8 @@ ScopedPointer<TextButton> MainContentComponent::addButton(String text, String na
 	return button;
 }
 
-void MainContentComponent::initUIElements() {
+void MainContentComponent::initUIElements()
+{
 
 	int buttonWidth = 100;
 	int buttonHeight = 30;
@@ -98,39 +101,53 @@ void MainContentComponent::initUIElements() {
 
 }
 
-void  MainContentComponent::buttonClicked(Button* button) {
+void  MainContentComponent::buttonClicked(Button* button)
+{
 	String buttonName = button->getName();
-	if (buttonName == "save_image") {
+	if (buttonName == "save_image") 
+	{
 		File fileToSave = showFileBrowser("save", "*.png");
 		MPEHandle->visualiser->saveGraphicsAsImage(fileToSave);
-	}else if (buttonName == "save_track") {
+	}
+	else if (buttonName == "save_track")
+	{
 		File fileToSave = showFileBrowser("save", "*.txt");
 		MPEHandle->trackHandle->saveTrackAsText(fileToSave);
-	}else if (buttonName == "start") {
-		if (startToggleClicksCount % 2 == 0) {
+	}
+	else if (buttonName == "start")
+	{
+		if (startToggleClicksCount % 2 == 0)
+		{
 			start();
 			startToggleOption->setColour(TextButton::buttonColourId, Colours::orangered);
 			startToggleOption->setButtonText("Stop");
-		}else {
+		}
+		else 
+		{
 			stop();
 			startToggleOption->setColour(TextButton::buttonColourId, defaultButtonColour);
 			startToggleOption->setButtonText("Start");
 		}
 		startToggleClicksCount++;
 		
-	}else if (buttonName == "load_track") {
+	}
+	else if (buttonName == "load_track") 
+	{
 		File fileToOpen = showFileBrowser("open", "*.txt");
-		if (fileToOpen.exists()) {
+		if (fileToOpen.exists())
+		{
 			MPEHandle->trackHandle->loadTrackFromText(fileToOpen, MPEHandle->visualiser);
 			loadTrackOption->setButtonText("Loaded :)");
 		}
 	}
-	else if (buttonName == "clear_graphics") {
+	else if (buttonName == "clear_graphics")
+	{
 		MPEHandle->visualiser->clearGraphics();
 		MPEHandle->visualiser = new Visualiser(this);
 	}
 }
-void MainContentComponent::paint(Graphics& g) {
+void MainContentComponent::paint(Graphics& g)
+{
 	g.setFont(Font(16.0f));
 	g.setColour(Colours::white);
 	String headerMsg = (deviceName == "") ? "No devices found" : "Your " + deviceName + " is connected!";
@@ -139,7 +156,8 @@ void MainContentComponent::paint(Graphics& g) {
 }
 
 
-void  MainContentComponent::start() {
+void  MainContentComponent::start()
+{
 	MPEHandle->visualiser->startTimer(timeInterval);
 	if (MPEHandle->trackHandle->isLoadingFile == true) {
 		Logger::outputDebugString("IS LOADING AND tIMER STAT");
@@ -150,7 +168,8 @@ void  MainContentComponent::start() {
 	}
 	started = true;
 }
-void  MainContentComponent::stop() {
+void  MainContentComponent::stop()
+{
 	if (MPEHandle->visualiser->isTimerRunning()) { MPEHandle->visualiser->stopTimer(); }
 	if (MPEHandle->trackHandle->isTimerRunning()) { MPEHandle->trackHandle->stopTimer(); }
 	startToggleOption->setButtonText("Start");
@@ -191,27 +210,32 @@ void MainContentComponent::audioDeviceStopped()
 {
 }
 */
-void MainContentComponent::output(String msg) {
+void MainContentComponent::output(String msg)
+{
 	Logger::outputDebugString(msg);
 }
 
-File MainContentComponent::showFileBrowser(String type, String fileTypeEnding) {
+File MainContentComponent::showFileBrowser(String type, String fileTypeEnding)
+{
 	Logger::outputDebugString("msg");
 	FileChooser choose("Choose a location to save...",
 		File::getSpecialLocation(File::userHomeDirectory),
 		fileTypeEnding);
 	bool result = (type == "open") ? choose.browseForFileToOpen() : choose.browseForFileToSave(true);
-	if (result==true) {
+	if (result==true)
+	{
 		File file(choose.getResult());
 		return file;
 	}
-	else {
+	else
+	{
 		return File();
 	}
 
 }
 
-void MainContentComponent::handleIncomingMidiMessage(MidiInput*, const MidiMessage& message) {
+void MainContentComponent::handleIncomingMidiMessage(MidiInput*, const MidiMessage& message)
+{
 	if (started == true) {
 		visInstrument.processNextMidiEvent(message);
 		//midiCollector.addMessageToQueue(message);

@@ -1,5 +1,6 @@
 #pragma once
-class TrackHandler: public Timer{
+class TrackHandler: public Timer
+{
 	public:
 		vector<MPENote> playedNotes;
 		vector<int> playedNoteTimes;
@@ -11,20 +12,24 @@ class TrackHandler: public Timer{
 		bool isLoadingFile = false;
 
 		MainContentComponent *mainComponent;
-		TrackHandler(MainContentComponent *mainComp) {
+		TrackHandler(MainContentComponent *mainComp)
+		{
 			mainComponent = mainComp;
 		}
 
-		void saveTrackAsText(File fileToSave) {
-			Logger::outputDebugString("saving as text....");
+		void saveTrackAsText(File fileToSave)
+		{
 			File textFile = fileToSave;
-			for (int i = 0;i < playedNotes.size();i++) {
+			for (int i = 0;i < playedNotes.size();i++)
+			{
 				MPENote note = playedNotes[i];
 				String dataRow = "";
-				for (int x = 0;x <= 5;x++) {
+				for (int x = 0;x <= 5;x++) 
+				{
 					String MPEDisplayVal;
 					
-					switch (x) {
+					switch (x)
+					{
 						case 0:
 							MPEDisplayVal = String(note.midiChannel);
 							break;
@@ -55,7 +60,8 @@ class TrackHandler: public Timer{
 			}
 		}
 
-		void loadTrackFromText(File FileToOpen,Visualiser *vis) {
+		void loadTrackFromText(File FileToOpen,Visualiser *vis)
+		{
 			visualiser = vis;
 			playedNotes.clear();
 			playedNoteTimes.clear();
@@ -106,9 +112,12 @@ class TrackHandler: public Timer{
 			Logger::outputDebugString(String(playedNoteTimes.size()));
 		}
 
-		void timerCallback() override {
-			for (int i = 0;i < playedNoteTimes.size();i++) {
-				if (playedNoteTimes[i] == timeCount) {
+		void timerCallback() override
+		{
+			for (int i = 0;i < playedNoteTimes.size();i++)
+			{
+				if (playedNoteTimes[i] == timeCount)
+				{
 					visualiser->drawNote(playedNotes[i]);
 					/*MidiMessage message;
 					message.setChannel(playedNotes[i].midiChannel);
@@ -119,7 +128,8 @@ class TrackHandler: public Timer{
 					//mainComponent->synthesiser.noteAdded(playedNotes[i]);
 					//mainComponent->midiCollector.addMessageToQueue(message);
 				}
-				if (timeCount == playedNoteTimes[playedNoteTimes.size()-1]) {
+				if (timeCount == playedNoteTimes[playedNoteTimes.size()-1])
+				{
 					mainComponent->stop();
 					break;
 				}
