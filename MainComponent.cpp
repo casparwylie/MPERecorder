@@ -8,19 +8,40 @@ MainContentComponent::MainContentComponent()
 {
 
 	windowWidth = 1000;
-	windowHeight = 800;
-	timeInterval = 10;
+	windowHeight = 700;
+	timeInterval = 30;
 	started = false;
 	startToggleClicksCount = 0;
 	defaultButtonColour = Colours::cadetblue;
 	MPEHandle = new MPEHandler(this);
-	
+	midiOutputDeviceIndex = -1;
 	setSize(windowWidth, windowHeight);
 	audioDevManager.initialise(0, 2, nullptr, true, String(), nullptr);
 	audioDevManager.addMidiInputCallback(String(), this);
 	//audioDevManager.addAudioCallback(this);
 	StringArray devices = MidiInput::getDevices();
-	deviceName = (devices.size() > 0) ? devices[0] : "";
+	deviceName = "";
+	for (int i = 0;i < devices.size();i++) 
+	{
+		Logger::outputDebugString(devices[i]);
+		if (devices[i].substring(0,4) == "ROLI")
+		{
+			Logger::outputDebugString(devices[i]);
+			deviceName = devices[i];
+		}
+		else {
+			midiOutputDeviceIndex = i;
+			
+			
+		}
+		
+		if (deviceName != "" && midiOutputDeviceIndex > -1) {
+			break;
+		}
+	}
+
+	Logger::outputDebugString("out" + String(midiOutputDeviceIndex));
+	midiOutputDevice = MidiOutput::openDevice(midiOutputDeviceIndex);
 	audioDevManager.setMidiInputEnabled(deviceName, true);
 
 	visInstrument.addListener(MPEHandle);
@@ -81,21 +102,21 @@ void MainContentComponent::initUIElements()
 
 	
 
-	const double visFullWidthPercent = 1;
+	const double visFullWidthPercent = 5;
 	const double visFullHeightPercent = 20;
 	const double viewPortHeightPercent = 0.8;
 	const double viewPortWidthPercent = 1;
 
 	visActualWidth = (visFullWidthPercent * windowWidth);
 	visActualHeight = visFullHeightPercent * windowHeight;
-	double viewPortActualWidth = (viewPortWidthPercent * windowWidth);
-	double viewPortActualHeight = (viewPortHeightPercent * windowHeight);
+	viewPortActualWidth = (viewPortWidthPercent * windowWidth);
+	viewPortActualHeight = (viewPortHeightPercent * windowHeight);
 
 	Rectangle<int> r(getLocalBounds());
 
 	visualiserView.setBounds(0,windowHeight-viewPortActualHeight,viewPortActualWidth,viewPortActualHeight);
 	MPEHandle->visualiser->setBounds(Rectangle<int>(visActualWidth,visActualHeight));
-	visualiserView.setScrollBarsShown(false, false, true, false);
+	visualiserView.setScrollBarsShown(false,false,true,true);
 	visualiserView.setViewPositionProportionately(0.5, 0.0);
 	addAndMakeVisible(visualiserView);
 
@@ -128,8 +149,6 @@ void  MainContentComponent::buttonClicked(Button* button)
 			startToggleOption->setColour(TextButton::buttonColourId, defaultButtonColour);
 			startToggleOption->setButtonText("Start");
 		}
-		startToggleClicksCount++;
-		
 	}
 	else if (buttonName == "load_track") 
 	{
@@ -158,9 +177,9 @@ void MainContentComponent::paint(Graphics& g)
 
 void  MainContentComponent::start()
 {
+	startToggleClicksCount++;
 	MPEHandle->visualiser->startTimer(timeInterval);
 	if (MPEHandle->trackHandle->isLoadingFile == true) {
-		Logger::outputDebugString("IS LOADING AND tIMER STAT");
 		MPEHandle->trackHandle->startTimer(timeInterval);
 		MPEHandle->trackHandle->isLoadingFile = false;
 		MPEHandle->mainComponent->loadTrackOption->setColour(TextButton::buttonColourId, defaultButtonColour);
@@ -170,11 +189,13 @@ void  MainContentComponent::start()
 }
 void  MainContentComponent::stop()
 {
+	startToggleClicksCount++;
 	if (MPEHandle->visualiser->isTimerRunning()) { MPEHandle->visualiser->stopTimer(); }
 	if (MPEHandle->trackHandle->isTimerRunning()) { MPEHandle->trackHandle->stopTimer(); }
 	startToggleOption->setButtonText("Start");
 	startToggleOption->setColour(TextButton::buttonColourId, defaultButtonColour);
 	started = false;
+
 }
 
 
@@ -242,5 +263,28 @@ void MainContentComponent::handleIncomingMidiMessage(MidiInput*, const MidiMessa
 	}
 }
 
+MidiMessage MainContentComponent::MPEToMidiMessage(MPENote note, int eventCalledFrom) {
+	MidiMessage newMidiMessage;
+	switch (eventCalledFrom)
+	{
+	case 1:
+		newMidiMessage = MidiMessage::noteOn(note.midiChannel, note.initialNote, note.noteOnVelocity.asUnsignedFloat());
+		break;
+	case 2:
+		newMidiMessage = MidiMessage::aftertouchChange(note.midiChannel, note.initialNote, note.pressure.as7BitInt());
+		break;
+	case 3:
+		newMidiMessage = MidiMessage::pitchWheel(note.midiChannel, note.pitchbend.as14BitInt());
+		break;
+	case 4:
+		newMidiMessage = MidiMessage::pitchWheel(note.midiChannel, note.pitchbend.as14BitInt());
+		break;
+	case 5:
+		newMidiMessage = MidiMessage::noteOff(note.midiChannel, note.initialNote, note.noteOffVelocity.asUnsignedFloat());
+		break;
 
+	}
+
+	return newMidiMessage;
+}
 

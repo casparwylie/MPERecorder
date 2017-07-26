@@ -4,6 +4,7 @@ class TrackHandler: public Timer
 	public:
 		vector<MPENote> playedNotes;
 		vector<int> playedNoteTimes;
+		vector<int> playedNoteEvents;
 		StringArray trackData;
 		Visualiser* visualiser;
 
@@ -55,16 +56,24 @@ class TrackHandler: public Timer
 					dataRow = dataRow + MPEDisplayVal + ",";
 				}
 
-				dataRow = dataRow + String(playedNoteTimes[i]) + ",";
+				dataRow = dataRow + String(playedNoteTimes[i]) + "," + String(playedNoteEvents[i]) + ",";
 				textFile.appendText(dataRow);
 			}
+			clearNotes();
+		}
+
+		void clearNotes() {
+			playedNotes.clear();
+			playedNoteTimes.clear();
+			playedNoteEvents.clear();
+			trackData.clear();
 		}
 
 		void loadTrackFromText(File FileToOpen,Visualiser *vis)
 		{
 			visualiser = vis;
-			playedNotes.clear();
-			playedNoteTimes.clear();
+			clearNotes();
+			timeCount = 0;
 			String trackDataStr = FileToOpen.loadFileAsString();
 			isLoadingFile = true;
 			int localCount = 0;
@@ -99,8 +108,11 @@ class TrackHandler: public Timer
 						tempTimbre = MPEValue::from14BitInt(dataAsInt);
 						break;
 					case 6:
-						localCount = -1;
 						playedNoteTimes.push_back(trackData[i].getIntValue());
+						break;
+					case 7:
+						localCount = -1;
+						playedNoteEvents.push_back(trackData[i].getIntValue());
 						MPENote newNote = MPENote(tempMidiChannel, tempInitialNote, tempVelocity, tempPitchBend, tempPressure, tempTimbre);
 						playedNotes.push_back(newNote);
 						break;
@@ -109,7 +121,7 @@ class TrackHandler: public Timer
 				localCount++;
 			}
 
-			Logger::outputDebugString(String(playedNoteTimes.size()));
+			//Logger::outputDebugString(String(playedNoteTimes.size()));
 		}
 
 		void timerCallback() override
@@ -119,14 +131,16 @@ class TrackHandler: public Timer
 				if (playedNoteTimes[i] == timeCount)
 				{
 					visualiser->drawNote(playedNotes[i]);
+					MidiMessage newMidiMessage = mainComponent->MPEToMidiMessage(playedNotes[i], playedNoteEvents[i]);
+					mainComponent->midiOutputDevice->sendMessageNow(newMidiMessage);
 					/*MidiMessage message;
 					message.setChannel(playedNotes[i].midiChannel);
 					message.setNoteNumber(playedNotes[i].initialNote);
 					message.setVelocity(playedNotes[i].noteOnVelocity.asUnsignedFloat());
 					message.set
-					*/
+					
 					//mainComponent->synthesiser.noteAdded(playedNotes[i]);
-					//mainComponent->midiCollector.addMessageToQueue(message);
+					//mainComponent->midiCollector.addMessageToQueue(message);*/
 				}
 				if (timeCount == playedNoteTimes[playedNoteTimes.size()-1])
 				{

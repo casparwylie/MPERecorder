@@ -11,6 +11,7 @@ class MainContentComponent : public Component,
 		int windowWidth;
 		int windowHeight;
 		int timeInterval;
+		int midiOutputDeviceIndex;
 		bool started;
 		Colour defaultButtonColour;
 		int startToggleClicksCount;
@@ -20,6 +21,7 @@ class MainContentComponent : public Component,
 		//MPESynthesiser synthesiser;
 		//MidiMessageCollector midiCollector;
 		ScopedPointer<MPEHandler> MPEHandle;
+		ScopedPointer<MidiOutput> midiOutputDevice;
 		ScopedPointer<TextButton> saveImageOption;
 		ScopedPointer<TextButton> saveTrackOption;
 		ScopedPointer<TextButton> loadTrackOption;
@@ -28,6 +30,8 @@ class MainContentComponent : public Component,
 
 		double visActualWidth;
 		double visActualHeight;
+		double viewPortActualWidth;
+		double viewPortActualHeight;
 
 		Viewport visualiserView;
 		MainContentComponent();
@@ -53,7 +57,9 @@ class MainContentComponent : public Component,
 
 		void buttonClicked(Button* button) override;
 
-		File MainContentComponent::showFileBrowser(String type, String fileTypeEnding);
+		File showFileBrowser(String type, String fileTypeEnding);
+
+		MidiMessage MPEToMidiMessage(MPENote note, int eventCalledFrom);
 
 	private:
 

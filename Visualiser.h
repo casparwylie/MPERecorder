@@ -17,11 +17,13 @@ class visNote : public Component
 		{
 			int size = (notePressure * 100);
 			size = (size < 5) ? 5 : size;
-			uint8 red = uint8(notePressure*255);
-			uint8 green = uint8(255 - noteTimbre*255);
-			uint8 blue = uint8(notePitchBend*255);
+			int takeOff = noteTimbre * 255;
+			uint8 red = uint8((notePressure*255));
+			uint8 green = uint8((255 - noteTimbre*255));
+			uint8 blue = uint8((notePitchBend*255));
 			g.setColour(Colour(red,green,blue));
-			g.drawEllipse(5, 5, size, size, (noteTimbre*10)+2);
+			int xInBound = (int) ((150 / 2) - (size / 2));
+			g.drawEllipse(xInBound, 5, size, size, 10);
 		}
 };
 
@@ -32,19 +34,26 @@ class Visualiser : public Component,
 		Image visImage;
 		vector<MPENote> playedNotes;
 		vector<int> noteTimes;
-		int visBendSen = 500;
-		int noteBoundSize = 150;
-		int XSen = 10;
+		int visBendSen = 1000;
+		static const int noteBoundSize = 150;
+		int XSen = 37;
 		int timeSen = 1;
 		int timeCount = 0;
 		int noteFreq = 5;
 		int yPos = timeSen;
+		int xPos;
 		int noteCounter = 0;
 		int lowestX = 10000;
 		int startY = 0;
 		int heighestX = 0;
-		int scrollStep = 513;
+		int scrollStep = 200;
 		int lastDrawnY = 0;
+		int scrollLeftX = 0;
+		int latestNoteNum = 0;
+		int currOctave = 1;
+		int lastOctave = 0;
+		bool firstScrollX = true;
+		vector<int> octaves = {12,36,60,84,108,132};
 		MainContentComponent *mainComponent;
 
 		Visualiser(MainContentComponent *mainComp)
@@ -66,8 +75,22 @@ class Visualiser : public Component,
 			int viewPosY = yPos+100;
 			if (yPos % scrollStep == 0) 
 			{
-				mainComponent->visualiserView.autoScroll(0, yPos+scrollStep, 1000, scrollStep);
+				mainComponent->visualiserView.setViewPosition(mainComponent->visualiserView.getViewPosition().getX(), yPos-scrollStep);
 			}
+			
+			for (int i = 0;i < octaves.size()-1; i++) {
+				if (latestNoteNum >= octaves[i] && latestNoteNum < octaves[i + 1]) {
+					currOctave = octaves[i];
+					break;
+				}
+			}
+			if (currOctave != lastOctave || firstScrollX == true) {
+
+				mainComponent->visualiserView.setViewPosition(currOctave*XSen, mainComponent->visualiserView.getViewPosition().getY());
+				lastOctave = currOctave;
+				firstScrollX = false;
+			}
+
 		}
 
 		void clearGraphics() 
@@ -94,21 +117,25 @@ class Visualiser : public Component,
 			{
 				playedNotes.push_back(note);
 				noteTimes.push_back(timeCount);
+				latestNoteNum = note.initialNote;
 				float velocity = note.noteOnVelocity.asUnsignedFloat();
 				float pressure = note.pressure.asUnsignedFloat();
 				float timbre = note.timbre.asUnsignedFloat();
 				float pitchBend = note.pitchbend.asSignedFloat();
 				float pitchBendUn = note.pitchbend.asUnsignedFloat();
 				visNote* newVisNote = new visNote(pressure,timbre,pitchBendUn);
-				int xPos = ((note.initialNote) * XSen) + pitchBend*visBendSen;
+				xPos = ((note.initialNote) * XSen) + pitchBend*visBendSen;
 				lowestX = (lowestX > xPos) ? xPos : lowestX;
 				heighestX = (heighestX < xPos) ? xPos : heighestX;
 				newVisNote->setBounds(xPos, yPos, noteBoundSize, noteBoundSize);
 				addAndMakeVisible(newVisNote);
+
+
 				if (noteCounter == 0)
 				{
 					startY = yPos;
-				}else
+				}
+				else
 				{
 					lastDrawnY = yPos;
 				}
