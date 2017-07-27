@@ -11,7 +11,6 @@ MainContentComponent::MainContentComponent()
 	windowHeight = 700;
 	timeInterval = 30;
 	started = false;
-	startToggleClicksCount = 0;
 	visType = "Normal";
 	defaultButtonColour = Colours::cadetblue;
 	MPEHandle = new MPEHandler(this);
@@ -141,7 +140,7 @@ void MainContentComponent::buttonClicked(Button* button)
 	}
 	else if (buttonName == "start")
 	{
-		if (startToggleClicksCount % 2 == 0)
+		if (startToggleOption->getButtonText()=="Start")
 		{
 			start();
 			startToggleOption->setColour(TextButton::buttonColourId, Colours::orangered);
@@ -181,7 +180,6 @@ void MainContentComponent::paint(Graphics& g)
 
 void  MainContentComponent::start()
 {
-	startToggleClicksCount++;
 	MPEHandle->visualiser->visType = visType;
 	MPEHandle->visualiser->startTimer(timeInterval);
 	if (MPEHandle->trackHandle->isLoadingFile == true) {
@@ -194,7 +192,6 @@ void  MainContentComponent::start()
 }
 void  MainContentComponent::stop()
 {
-	startToggleClicksCount++;
 	if (MPEHandle->visualiser->isTimerRunning()) { MPEHandle->visualiser->stopTimer(); }
 	if (MPEHandle->trackHandle->isTimerRunning()) { MPEHandle->trackHandle->stopTimer(); }
 	startToggleOption->setButtonText("Start");

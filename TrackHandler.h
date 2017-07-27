@@ -121,7 +121,6 @@ class TrackHandler: public Timer
 				localCount++;
 			}
 
-			//Logger::outputDebugString(String(playedNoteTimes.size()));
 		}
 
 		void timerCallback() override
@@ -130,17 +129,9 @@ class TrackHandler: public Timer
 			{
 				if (playedNoteTimes[i] == timeCount)
 				{
-					visualiser->drawNote(playedNotes[i]);
+					visualiser->drawNote(playedNotes[i], playedNoteEvents[i]);
 					MidiMessage newMidiMessage = mainComponent->MPEToMidiMessage(playedNotes[i], playedNoteEvents[i]);
 					mainComponent->midiOutputDevice->sendMessageNow(newMidiMessage);
-					/*MidiMessage message;
-					message.setChannel(playedNotes[i].midiChannel);
-					message.setNoteNumber(playedNotes[i].initialNote);
-					message.setVelocity(playedNotes[i].noteOnVelocity.asUnsignedFloat());
-					message.set
-					
-					//mainComponent->synthesiser.noteAdded(playedNotes[i]);
-					//mainComponent->midiCollector.addMessageToQueue(message);*/
 				}
 				if (timeCount == playedNoteTimes[playedNoteTimes.size()-1])
 				{

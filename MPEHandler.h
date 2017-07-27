@@ -34,7 +34,8 @@ class MPEHandler : public Component,
 						MidiMessage newMidiMessage = owner.mainComponent->MPEToMidiMessage(note, eventCalledFrom);
 						midiOutputDevice->sendMessageNow(newMidiMessage);
 					}
-					owner.visualiser->drawNote(note);
+					
+					owner.visualiser->drawNote(note, eventCalledFrom);
 					owner.trackHandle->playedNotes.push_back(note);
 					owner.trackHandle->playedNoteTimes.push_back(vis->timeCount);
 					owner.trackHandle->playedNoteEvents.push_back(eventCalledFrom);

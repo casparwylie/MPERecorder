@@ -8,14 +8,22 @@ class visNote : public Component
 
 		float notePressure;
 		float noteTimbre;
+		float timbreChange;
+		float noteVelocity = 0;
 		float notePitchBend;
+		int eventType;
 		String visType;
-		visNote(float pressure, float timbre, float pitchBend, String vType)
+		visNote(float pressure, float timbre, float pitchBend, String vType, float tChange, float vel, int eType)
 		{
 			notePressure = pressure;
 			noteTimbre = timbre;
+			//if (eType == 1) {
+			noteVelocity = vel;
+			//}
 			notePitchBend = pitchBend;
+			timbreChange = tChange;
 			visType = vType;
+			eventType = eType;
 		}
 
 		void paint(Graphics& g) override
@@ -24,15 +32,21 @@ class visNote : public Component
 			size = (size < 5) ? 5 : size;
 			int takeOff = noteTimbre * 255;
 
-			if (visType == "Spiral") { size = size / 6; }
-			
-			uint8 red = uint8((notePressure*255));
-			uint8 green = uint8((255 - noteTimbre*255));
-			uint8 blue = uint8((notePitchBend*255));
+			if (visType == "Spiral") { size = size / 5; }
+		
+		/*	uint8 red = uint8(abs(255 * notePressure));
+			uint8 green = uint8(255- abs(255 * noteVelocity));
+			uint8 blue = uint8(abs(255 * notePitchBend));
+			g.setColour(Colour(red,green,blue));*/
 
-			g.setColour(Colour(red,green,blue));
+			notePressure = (notePressure < 0.4) ? 0.4 : notePressure;
+			float hue = noteVelocity;
+			float saturation = notePressure;
+			float brightness =notePressure;
+			float alpha = 1.0;
+			g.setColour(Colour(hue,saturation,brightness,alpha));
 			int xInBound = (int) ((150 / 2) - (size / 2));
-			g.drawEllipse(xInBound, 5, size, size, 10);
+			g.drawEllipse(xInBound, 5, size,size - timbreChange*size, 10);
 		}
 };
 
@@ -62,9 +76,10 @@ class Visualiser : public Component,
 		int currOctave = 1;
 		int radius = 100;
 		int lastOctave = 0;
+		float startNoteTimbre = 0;
 		float spiralStartY;
 		float spiralStartX;
-		static const int spiralNoteSizeDivider = 6;
+		static const int spiralNoteSizeDivider = 5;
 		String visType = "";
 		bool firstScrollX = true;
 		int spiralBearing;
@@ -114,7 +129,7 @@ class Visualiser : public Component,
 					mainComponent->visualiserView.setViewPosition(startViewPosX, startViewPosY);
 					startImgY = 10000;
 				}
-				else if(timeCount % 100 == 0){
+				else if(timeCount % 50 == 0){
 					Logger::outputDebugString("tring to repos");
 					int viewPosX = xPos - (mainComponent->viewPortActualWidth / 2);
 					int viewPosY = yPos - (mainComponent->viewPortActualHeight / 2);
@@ -192,9 +207,9 @@ class Visualiser : public Component,
 		}
 
 
-		void drawNote(MPENote note)
+		void drawNote(MPENote note, int eventType)
 		{
-			if ((noteCounter % noteFreq ==0 ) && ( note.keyState == MPENote::keyDown || note.keyState == MPENote::keyDownAndSustained))
+			if ((noteCounter % noteFreq ==0 || eventType == 1) && ( note.keyState == MPENote::keyDown || note.keyState == MPENote::keyDownAndSustained))
 			{
 
 				if ((visType == "Spiral" && noteCounter == 0) || visType == "Normal") {
@@ -218,7 +233,11 @@ class Visualiser : public Component,
 				float pitchBend = note.pitchbend.asSignedFloat();
 				float pitchBendUn = note.pitchbend.asUnsignedFloat();
 
-				visNote* newVisNote = new visNote(pressure,timbre,pitchBendUn, visType);
+				if (eventType == 1) {
+					startNoteTimbre = timbre;
+				}
+				float timbreChangeFromStartNote = abs(startNoteTimbre - timbre);
+				visNote* newVisNote = new visNote(pressure,timbre,pitchBendUn, visType, timbreChangeFromStartNote, velocity, eventType);
 				graphicsUpdaterOnDraw(note);
 				newVisNote->setBounds(xPos, yPos, noteBoundSize, noteBoundSize);
 				addAndMakeVisible(newVisNote);

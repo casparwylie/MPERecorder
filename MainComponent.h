@@ -19,8 +19,6 @@ class MainContentComponent : public Component,
 		OwnedArray<Label> MPELabels;
 		AudioDeviceManager audioDevManager;
 		MPEInstrument visInstrument;
-		//MPESynthesiser synthesisser;
-		//MidiMessageCollector midiCollector;
 		ScopedPointer<MPEHandler> MPEHandle;
 		ScopedPointer<MidiOutput> midiOutputDevice;
 		ScopedPointer<TextButton> saveImageOption;
