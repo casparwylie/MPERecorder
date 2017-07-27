@@ -2,9 +2,9 @@
 class MPEHandler;
 using namespace std;
 class MainContentComponent : public Component,
-							// private AudioIODeviceCallback,
 							 private MidiInputCallback,
-							 public Button::Listener
+							 public Button::Listener,
+							 public ComboBox::Listener
  {
 	public:
 		String deviceName;
@@ -13,12 +13,13 @@ class MainContentComponent : public Component,
 		int timeInterval;
 		int midiOutputDeviceIndex;
 		bool started;
+		String visType;
 		Colour defaultButtonColour;
 		int startToggleClicksCount;
 		OwnedArray<Label> MPELabels;
 		AudioDeviceManager audioDevManager;
 		MPEInstrument visInstrument;
-		//MPESynthesiser synthesiser;
+		//MPESynthesiser synthesisser;
 		//MidiMessageCollector midiCollector;
 		ScopedPointer<MPEHandler> MPEHandle;
 		ScopedPointer<MidiOutput> midiOutputDevice;
@@ -27,6 +28,7 @@ class MainContentComponent : public Component,
 		ScopedPointer<TextButton> loadTrackOption;
 		ScopedPointer<TextButton> startToggleOption;
 		ScopedPointer<TextButton> clearGraphicsOption;
+		ScopedPointer<ComboBox> chooseVisTypeBox;
 
 		double visActualWidth;
 		double visActualHeight;
@@ -42,20 +44,14 @@ class MainContentComponent : public Component,
 
 		void output(String msg);
 
-	/*	void audioDeviceIOCallback(const float**, int,
-			float** outputChannelData, int numOutputChannels,
-			int numSamples) override;
-
-		void audioDeviceAboutToStart(AudioIODevice* device) override;
-
-		void audioDeviceStopped();*/
-
 		void stop();
 		void start();
 
 		ScopedPointer<TextButton> addButton(String text, String name, Rectangle<int>  bounds, Colour colour);
 
 		void buttonClicked(Button* button) override;
+
+		void comboBoxChanged(ComboBox* comboBox) override;
 
 		File showFileBrowser(String type, String fileTypeEnding);
 
@@ -64,9 +60,6 @@ class MainContentComponent : public Component,
 	private:
 
 		void handleIncomingMidiMessage(MidiInput*, const MidiMessage& message) override;
-	/*	void audioDeviceIOCallback(const float**, int,
-			float** outputChannelData, int numOutputChannels,
-			int numSamples) override;*/
 
 
 		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainContentComponent)

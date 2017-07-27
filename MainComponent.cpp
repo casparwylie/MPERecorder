@@ -12,6 +12,7 @@ MainContentComponent::MainContentComponent()
 	timeInterval = 30;
 	started = false;
 	startToggleClicksCount = 0;
+	visType = "Normal";
 	defaultButtonColour = Colours::cadetblue;
 	MPEHandle = new MPEHandler(this);
 	midiOutputDeviceIndex = -1;
@@ -31,29 +32,19 @@ MainContentComponent::MainContentComponent()
 		}
 		else {
 			midiOutputDeviceIndex = i;
-			
-			
 		}
 		
-		if (deviceName != "" && midiOutputDeviceIndex > -1) {
+		if (deviceName != "" && midiOutputDeviceIndex > -1)
+		{
 			break;
 		}
 	}
-
 	Logger::outputDebugString("out" + String(midiOutputDeviceIndex));
 	midiOutputDevice = MidiOutput::openDevice(midiOutputDeviceIndex);
 	audioDevManager.setMidiInputEnabled(deviceName, true);
 
 	visInstrument.addListener(MPEHandle);
-	
-
-	/*for (int i = 0; i < 15; ++i) {
-		synthesiser.addVoice(new SynthVoice);
-	}
-
-	synthesiser.enableLegacyMode(24);*/
 	visInstrument.enableLegacyMode(24);
-	//synthesiser.setVoiceStealingEnabled(false);
 
 	initUIElements();
 	
@@ -93,7 +84,16 @@ void MainContentComponent::initUIElements()
 	loadTrackOption->addListener(this);
 
 	buttonPosX += buttonWidth + buttonSpacing;
-	startToggleOption = addButton("Start", "start", Rectangle<int>(buttonPosX, buttonPosY, buttonWidth, buttonHeight), defaultButtonColour);
+	chooseVisTypeBox = new ComboBox("choose_vis_type");
+	StringArray visTypes = { "Normal", "Spiral" };
+	chooseVisTypeBox->addItemList(visTypes,1);
+	chooseVisTypeBox->setBounds(Rectangle<int>(buttonPosX, buttonPosY, buttonWidth, buttonHeight));
+	chooseVisTypeBox->setSelectedItemIndex(0);
+	chooseVisTypeBox->setColour(TextButton::buttonColourId, defaultButtonColour);
+	chooseVisTypeBox->addListener(this);
+	addAndMakeVisible(chooseVisTypeBox);
+
+	startToggleOption = addButton("Start", "start", Rectangle<int>(buttonPosX, buttonPosY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight), defaultButtonColour);
 	startToggleOption->addListener(this);
 
 	buttonPosX += buttonWidth + buttonSpacing;
@@ -116,13 +116,17 @@ void MainContentComponent::initUIElements()
 
 	visualiserView.setBounds(0,windowHeight-viewPortActualHeight,viewPortActualWidth,viewPortActualHeight);
 	MPEHandle->visualiser->setBounds(Rectangle<int>(visActualWidth,visActualHeight));
-	visualiserView.setScrollBarsShown(false,false,true,true);
+	visualiserView.setScrollBarsShown(true,true,true,true);
 	visualiserView.setViewPositionProportionately(0.5, 0.0);
 	addAndMakeVisible(visualiserView);
 
 }
 
-void  MainContentComponent::buttonClicked(Button* button)
+void MainContentComponent::comboBoxChanged(ComboBox* comboBox) {
+	visType = comboBox->getText();
+}
+
+void MainContentComponent::buttonClicked(Button* button)
 {
 	String buttonName = button->getName();
 	if (buttonName == "save_image") 
@@ -178,6 +182,7 @@ void MainContentComponent::paint(Graphics& g)
 void  MainContentComponent::start()
 {
 	startToggleClicksCount++;
+	MPEHandle->visualiser->visType = visType;
 	MPEHandle->visualiser->startTimer(timeInterval);
 	if (MPEHandle->trackHandle->isLoadingFile == true) {
 		MPEHandle->trackHandle->startTimer(timeInterval);
@@ -198,39 +203,6 @@ void  MainContentComponent::stop()
 
 }
 
-
-/*
-void MainContentComponent::audioDeviceIOCallback(const float** , int,
-	float** outputChannelData, int numOutputChannels,
-	int numSamples)
-{
-	// make buffer
-	AudioBuffer<float> buffer(outputChannelData, numOutputChannels, numSamples);
-
-	// clear it to silence
-	buffer.clear();
-
-	MidiBuffer incomingMidi;
-
-	// get the MIDI messages for this audio block
-	midiCollector.removeNextBlockOfMessages(incomingMidi, numSamples);
-
-	// synthesise the block
-	synthesiser.renderNextBlock(buffer, incomingMidi, 0, numSamples);
-}
-
-
-void MainContentComponent::audioDeviceAboutToStart(AudioIODevice* device)
-{
-	const double sampleRate = device->getCurrentSampleRate();
-	midiCollector.reset(sampleRate);
-	synthesiser.setCurrentPlaybackSampleRate(sampleRate);
-}
-
-void MainContentComponent::audioDeviceStopped()
-{
-}
-*/
 void MainContentComponent::output(String msg)
 {
 	Logger::outputDebugString(msg);
