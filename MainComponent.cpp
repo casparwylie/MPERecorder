@@ -1,7 +1,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "MainComponent.h"
 #include "MPEHandler.h"
-#include "SynthVoice.h"
 
 
 MainContentComponent::MainContentComponent()
@@ -24,7 +23,7 @@ MainContentComponent::MainContentComponent()
 	for (int i = 0;i < devices.size();i++) 
 	{
 		Logger::outputDebugString(devices[i]);
-		if (devices[i].substring(0,4) == "ROLI")
+		if (devices[i].substring(0,4) == "ROLI" || devices[i].substring(0,3) == "Sea")
 		{
 			Logger::outputDebugString(devices[i]);
 			deviceName = devices[i];

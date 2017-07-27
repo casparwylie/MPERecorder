@@ -38,7 +38,7 @@ class MainContentComponent : public Component,
 
 		void initUIElements();
  
-		void paint(Graphics& g);
+		void paint(Graphics& g) override;
 
 		void output(String msg);
 
