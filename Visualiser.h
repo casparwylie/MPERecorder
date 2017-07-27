@@ -201,9 +201,9 @@ class Visualiser : public Component,
 			int endX = (endImgX - startImgX) + noteBoundSize;
 			Rectangle<int> graphicsArea = Rectangle<int>(startImgX,startImgY,endX, endY);
 			visImage = this->createComponentSnapshot(graphicsArea, true, 5.0f);
-			FileOutputStream streamFile = fileToSave;
+			ScopedPointer<FileOutputStream> streamFile = new FileOutputStream (fileToSave);
 			PNGImageFormat pngImage;
-			pngImage.writeImageToStream(visImage, streamFile);
+			pngImage.writeImageToStream(visImage, *streamFile);
 		}
 
 
