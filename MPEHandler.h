@@ -11,10 +11,14 @@ class MPEHandler : public Component,
 		Visualiser *visualiser;
 		TrackHandler *trackHandle;
 		MainContentComponent *mainComponent;
-		MPEHandler(MainContentComponent *mainComp) {
+        vector<MPENote> notesDown;
+        vector<bool> notesDownValid;
+        MPEHandler(MainContentComponent *mainComp) {
 			mainComponent = mainComp;
 			visualiser = new Visualiser(mainComponent);
 			trackHandle = new TrackHandler(mainComponent);
+            notesDown.assign(16,MPENote());
+            notesDownValid.assign(16,false);
 		}
 
 		void recievedMidiMiddleProcess(MPENote note, int eventCalledFrom, MidiOutput *midiOutputDevice){
@@ -48,40 +52,52 @@ class MPEHandler : public Component,
 			(new DrawCallback(*this, note, eventCalledFrom, visualiser, midiOutputDevice))->post();
 		}
 
-		void startNoteDownTimer() {
+		void startNoteDownTimer(MPENote note) {
+            notesDown[note.midiChannel] = note;
+            notesDownValid[note.midiChannel] = true;
 			if (isTimerRunning() == false) {
-				startTimer(10);
+				startTimer(1);
 			}
 		}
 		void noteAdded(MPENote note) override {
-			startNoteDownTimer();
+			startNoteDownTimer(note);
 			recievedMidiMiddleProcess(note, 1, mainComponent->midiOutputDevice);
 		}
 		void notePressureChanged(MPENote note) override {
-			startNoteDownTimer();
+			startNoteDownTimer(note);
 			recievedMidiMiddleProcess(note, 2, mainComponent->midiOutputDevice);
 		}
 		void notePitchbendChanged(MPENote note) override {
-			startNoteDownTimer();
+			startNoteDownTimer(note);
 			recievedMidiMiddleProcess(note, 3, mainComponent->midiOutputDevice);
 		}
 		void noteTimbreChanged(MPENote note) override {
-			startNoteDownTimer();
+			startNoteDownTimer(note);
 			recievedMidiMiddleProcess(note, 4, mainComponent->midiOutputDevice);
 		}
 		void noteKeyStateChanged(MPENote note) override {
 			//recievedMidiMiddleProcess(note,5);
 		}
 		void noteReleased(MPENote note) override {
-			stopTimer();
+            notesDown[note.midiChannel] = MPENote();
+            notesDownValid[note.midiChannel] = false;
+            for(int i = 0;i < notesDownValid.size(); i++){
+                if(notesDownValid[i] == true){
+                    break;
+                }else if(i == notesDownValid.size() -1){
+                    stopTimer();
+                }
+            }
 			recievedMidiMiddleProcess(note, 5, mainComponent->midiOutputDevice);
 		}
 
 		void timerCallback() override
 		{
-			if (trackHandle->playedNotes.size() > 1) {
-				recievedMidiMiddleProcess(trackHandle->playedNotes[trackHandle->playedNotes.size() - 1], 6, mainComponent->midiOutputDevice);
-			}
+            for(int i = 0;i < notesDown.size();i++){
+                if (trackHandle->playedNotes.size() > 1 && notesDownValid[i]==true) {
+                    recievedMidiMiddleProcess(notesDown[i], 6, mainComponent->midiOutputDevice);
+                }
+            }
 		}
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MPEHandler)

@@ -38,8 +38,9 @@ class visNote : public Component
 			uint8 green = uint8(255- abs(255 * noteVelocity));
 			uint8 blue = uint8(abs(255 * notePitchBend));
 			g.setColour(Colour(red,green,blue));*/
-
-			notePressure = (notePressure < 0.4) ? 0.4 : notePressure;
+            
+            float minPressure = 0.5;
+			notePressure = (notePressure < minPressure) ? minPressure : notePressure;
 			float hue = noteVelocity;
 			float saturation = notePressure;
 			float brightness =notePressure;
@@ -58,6 +59,7 @@ class Visualiser : public Component,
 		vector<MPENote> playedNotes;
 		vector<int> noteTimes;
 		int visBendSen = 1000;
+        int visBendSenSpiral = 400;
 		static const int noteBoundSize = 150;
 		int xSen = 37;
 		int timeSen = 1;
@@ -76,6 +78,7 @@ class Visualiser : public Component,
 		int currOctave = 1;
 		int radius = 100;
 		int lastOctave = 0;
+        int spiralSpaceBeforeMovePos = 200;
 		float startNoteTimbre = 0;
 		float spiralStartY;
 		float spiralStartX;
@@ -129,7 +132,15 @@ class Visualiser : public Component,
 					mainComponent->visualiserView.setViewPosition(startViewPosX, startViewPosY);
 					startImgY = 10000;
 				}
-				else if(timeCount % 50 == 0){
+                
+                int visualScrollBoundsX = mainComponent->visualiserView.getViewPosition().getX() + spiralSpaceBeforeMovePos;
+                
+                int visualScrollBoundsY = mainComponent->visualiserView.getViewPosition().getY() + spiralSpaceBeforeMovePos;
+                
+                int visualScrollBoundsWidth = mainComponent->viewPortActualWidth - (spiralSpaceBeforeMovePos*2);
+                int visualScrollBoundsHeight = mainComponent->viewPortActualHeight - (spiralSpaceBeforeMovePos*2);
+                
+                if(xPos < visualScrollBoundsX || xPos > visualScrollBoundsX+visualScrollBoundsWidth || yPos < visualScrollBoundsY || yPos > visualScrollBoundsY+visualScrollBoundsHeight){
 					Logger::outputDebugString("tring to repos");
 					int viewPosX = xPos - (mainComponent->viewPortActualWidth / 2);
 					int viewPosY = yPos - (mainComponent->viewPortActualHeight / 2);
@@ -159,8 +170,9 @@ class Visualiser : public Component,
 				spiralStartX = mainComponent->visActualWidth / 2;
 				spiralStartY = mainComponent->visActualHeight / 2;
 
+                int bendAmount =  note.pitchbend.asSignedFloat()*visBendSenSpiral;
 				int octavePusher = currOctave * 5;
-				float fullRadius = (startRadius + (timeCount / spiralSpacing)) + (note.initialNote*5) - octavePusher + note.pitchbend.asSignedFloat()*visBendSen;
+				float fullRadius = (startRadius + (timeCount / spiralSpacing)) + (note.initialNote*5) - octavePusher + bendAmount;
 				yPos = fullRadius * cos(spiralBearing * (M_PI / 180)) + spiralStartY;
 				xPos = fullRadius * sin(spiralBearing * (M_PI / 180)) + spiralStartX;
 
@@ -208,9 +220,19 @@ class Visualiser : public Component,
 			pngImage.writeImageToStream(visImage, *streamFile);
 		}
 
-
+        int noteDownCount = 0;
 		void drawNote(MPENote note, int eventType)
 		{
+            if(eventType == 1){
+                noteDownCount ++;
+            }else if(eventType == 5){
+                noteDownCount --;
+            }
+            if(noteDownCount >= 4){
+                noteFreq = 20;
+            }else{
+                noteFreq = 5;
+            }
 			if ((noteCounter % noteFreq ==0 || eventType == 1) && ( note.keyState == MPENote::keyDown || note.keyState == MPENote::keyDownAndSustained))
 			{
 

@@ -69,7 +69,10 @@ class TrackHandler: public Timer
 			playedNoteEvents.clear();
 			trackData.clear();
 		}
-
+    
+        void stopPlay(){
+            stopTimer();
+        }
 		void loadTrackFromText(File FileToOpen,Visualiser *vis)
 		{
 			visualiser = vis;

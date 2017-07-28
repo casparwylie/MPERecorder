@@ -197,6 +197,7 @@ void MainContentComponent::buttonClicked(Button* button)
 	else if (buttonName == "clear_graphics")
 	{
 		MPEHandle->visualiser->clearGraphics();
+        MPEHandle->trackHandle->clearNotes();
 		MPEHandle->visualiser = new Visualiser(this);
 	}
 }
@@ -227,6 +228,9 @@ void  MainContentComponent::stop()
 	if (MPEHandle->visualiser->isTimerRunning()) { MPEHandle->visualiser->stopTimer(); }
 	if (MPEHandle->trackHandle->isTimerRunning()) { MPEHandle->trackHandle->stopTimer(); }
 	startToggleOption->setButtonText("Start");
+    float vZero = 0.0;
+    MidiMessage stopNotes = MidiMessage::noteOff(1,1,vZero);
+    midiOutputDevice->sendMessageNow(stopNotes);
 	startToggleOption->setColour(TextButton::buttonColourId, defaultButtonColour);
 	started = false;
 
