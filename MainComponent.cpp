@@ -2,7 +2,6 @@
 #include "MainComponent.h"
 #include "MPEHandler.h"
 
-
 MainContentComponent::MainContentComponent()
 {
 
@@ -23,10 +22,10 @@ MainContentComponent::MainContentComponent()
 	for (int i = 0;i < devices.size();i++) 
 	{
 		Logger::outputDebugString(devices[i]);
-		if (devices[i].substring(0,4) == "ROLI" || devices[i].substring(0,3) == "Sea")
+		if (devices[i].contains("ROLI") || devices[i].contains("Sea"))
 		{
-			Logger::outputDebugString(devices[i]);
 			deviceName = devices[i];
+			deviceInID = i;
 		}
 		else {
 			midiOutputDeviceIndex = i;
@@ -37,9 +36,7 @@ MainContentComponent::MainContentComponent()
 			break;
 		}
 	}
-	Logger::outputDebugString("out" + String(midiOutputDeviceIndex));
-	midiOutputDevice = MidiOutput::openDevice(midiOutputDeviceIndex);
-	audioDevManager.setMidiInputEnabled(deviceName, true);
+	Logger::outputDebugString(String(midiOutputDeviceIndex));
 
 	visInstrument.addListener(MPEHandle);
 	visInstrument.enableLegacyMode(24);
@@ -59,8 +56,21 @@ ScopedPointer<TextButton> MainContentComponent::addButton(String text, String na
 	return button;
 }
 
+ScopedPointer<ComboBox> MainContentComponent::addComboBox(StringArray optionList, String name, Rectangle<int>  bounds, Colour colour)
+{
+	ScopedPointer<ComboBox> comboBox = new ComboBox(name);
+	StringArray visTypes = { "Normal", "Spiral" };
+	comboBox->addItemList(optionList, 1);
+	comboBox->setBounds(bounds);
+	comboBox->setSelectedItemIndex(0);
+	comboBox->setColour(TextButton::buttonColourId, defaultButtonColour);
+	addAndMakeVisible(comboBox);
+	return comboBox;
+}
+
 void MainContentComponent::initUIElements()
 {
+
 
 	int buttonWidth = 100;
 	int buttonHeight = 30;
@@ -69,6 +79,21 @@ void MainContentComponent::initUIElements()
 	int buttonCount = 5;
 	int buttonTotalArea = buttonCount*(buttonWidth + buttonSpacing);
 	int buttonPosX = windowWidth/2 - buttonTotalArea/2;
+
+	StringArray midiDevices = MidiInput::getDevices();
+	chooseMidiInputBox = addComboBox(midiDevices, "midi_input", Rectangle<int>(100, buttonSpacing*2, buttonWidth, buttonHeight), defaultButtonColour);
+	chooseMidiInputBox->addListener(this);
+	chooseMidiInputLabel = new Label("midi_input_label", "Midi Input: ");
+	chooseMidiInputLabel->attachToComponent(chooseMidiInputBox, true);
+	addAndMakeVisible(chooseMidiInputLabel);
+	chooseMidiInputBox->setSelectedItemIndex(deviceInID);
+
+	chooseMidiOutputBox = addComboBox(midiDevices, "midi_output", Rectangle<int>(100, buttonPosY, buttonWidth, buttonHeight), defaultButtonColour);
+	chooseMidiOutputBox->addListener(this);
+	chooseMidiOutputLabel = new Label("midi_output_label", "Midi Output: ");
+	chooseMidiOutputLabel->attachToComponent(chooseMidiOutputBox, true);
+	addAndMakeVisible(chooseMidiOutputLabel);
+	chooseMidiOutputBox->setSelectedItemIndex(midiOutputDeviceIndex);
 
 	saveImageOption = addButton("Save Image","save_image",Rectangle<int>(buttonPosX, buttonPosY, buttonWidth, buttonHeight), defaultButtonColour);
 	saveImageOption->addListener(this);
@@ -82,14 +107,9 @@ void MainContentComponent::initUIElements()
 	loadTrackOption->addListener(this);
 
 	buttonPosX += buttonWidth + buttonSpacing;
-	chooseVisTypeBox = new ComboBox("choose_vis_type");
 	StringArray visTypes = { "Normal", "Spiral" };
-	chooseVisTypeBox->addItemList(visTypes,1);
-	chooseVisTypeBox->setBounds(Rectangle<int>(buttonPosX, buttonPosY, buttonWidth, buttonHeight));
-	chooseVisTypeBox->setSelectedItemIndex(0);
-	chooseVisTypeBox->setColour(TextButton::buttonColourId, defaultButtonColour);
+	chooseVisTypeBox = addComboBox(visTypes, "vis_types", Rectangle<int>(buttonPosX, buttonPosY, buttonWidth, buttonHeight), defaultButtonColour);
 	chooseVisTypeBox->addListener(this);
-	addAndMakeVisible(chooseVisTypeBox);
 
 	startToggleOption = addButton("Start", "start", Rectangle<int>(buttonPosX, buttonPosY + buttonHeight + buttonSpacing, buttonWidth, buttonHeight), defaultButtonColour);
 	startToggleOption->addListener(this);
@@ -120,8 +140,21 @@ void MainContentComponent::initUIElements()
 
 }
 
-void MainContentComponent::comboBoxChanged(ComboBox* comboBox) {
-	visType = comboBox->getText();
+void MainContentComponent::comboBoxChanged(ComboBox* comboBox) 
+{
+	String selectedText = comboBox->getText();
+	String comboName = comboBox->getName();
+	if (comboName == "vis_types") {
+		visType = selectedText;
+	}
+	else if (comboName == "midi_input") {
+		deviceName = selectedText;
+		audioDevManager.setMidiInputEnabled(deviceName, true);
+	}
+	else if (comboName == "midi_output") {
+		midiOutputDeviceIndex = comboBox->getSelectedId()-1;
+		midiOutputDevice = MidiOutput::openDevice(midiOutputDeviceIndex);
+	}
 }
 
 void MainContentComponent::buttonClicked(Button* button)
@@ -171,7 +204,7 @@ void MainContentComponent::paint(Graphics& g)
 {
 	g.setFont(Font(16.0f));
 	g.setColour(Colours::white);
-	String headerMsg = (deviceName == "") ? "No devices found" : "Your " + deviceName + " is connected!";
+	String headerMsg = "MPE Recorder and Visualiser";
 	g.drawText(headerMsg, 0, 0, windowWidth, 40, Justification::centred, true);
 	
 }

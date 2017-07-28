@@ -160,7 +160,7 @@ class Visualiser : public Component,
 				spiralStartY = mainComponent->visActualHeight / 2;
 
 				int octavePusher = currOctave * 5;
-				float fullRadius = (startRadius + (timeCount / spiralSpacing)) + (note.initialNote*5) - octavePusher + note.pitchbend.asSignedFloat()*150;
+				float fullRadius = (startRadius + (timeCount / spiralSpacing)) + (note.initialNote*5) - octavePusher + note.pitchbend.asSignedFloat()*visBendSen;
 				yPos = fullRadius * cos(spiralBearing * (M_PI / 180)) + spiralStartY;
 				xPos = fullRadius * sin(spiralBearing * (M_PI / 180)) + spiralStartX;
 
@@ -201,8 +201,9 @@ class Visualiser : public Component,
 			int endX = (endImgX - startImgX) + noteBoundSize;
 			Rectangle<int> graphicsArea = Rectangle<int>(startImgX,startImgY,endX, endY);
 			visImage = this->createComponentSnapshot(graphicsArea, true, 5.0f);
-			FileOutputStream *streamFile = new FileOutputStream(fileToSave);
-            
+
+			ScopedPointer<FileOutputStream> streamFile = new FileOutputStream (fileToSave);
+
 			PNGImageFormat pngImage;
 			pngImage.writeImageToStream(visImage, *streamFile);
 		}

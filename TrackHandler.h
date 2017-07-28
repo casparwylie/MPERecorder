@@ -21,6 +21,7 @@ class TrackHandler: public Timer
 		void saveTrackAsText(File fileToSave)
 		{
 			File textFile = fileToSave;
+			Logger::outputDebugString(String(playedNotes.size()));
 			for (int i = 0;i < playedNotes.size();i++)
 			{
 				MPENote note = playedNotes[i];
@@ -136,6 +137,7 @@ class TrackHandler: public Timer
 				if (timeCount == playedNoteTimes[playedNoteTimes.size()-1])
 				{
 					mainComponent->stop();
+					clearNotes();
 					break;
 				}
 			}

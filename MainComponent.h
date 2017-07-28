@@ -13,6 +13,7 @@ class MainContentComponent : public Component,
 		int timeInterval;
 		int midiOutputDeviceIndex;
 		bool started;
+		int deviceInID;
 		String visType;
 		Colour defaultButtonColour;
 		int startToggleClicksCount;
@@ -27,6 +28,10 @@ class MainContentComponent : public Component,
 		ScopedPointer<TextButton> startToggleOption;
 		ScopedPointer<TextButton> clearGraphicsOption;
 		ScopedPointer<ComboBox> chooseVisTypeBox;
+		ScopedPointer<ComboBox> chooseMidiInputBox;
+		ScopedPointer<ComboBox> chooseMidiOutputBox;
+		ScopedPointer<Label> chooseMidiOutputLabel;
+		ScopedPointer<Label> chooseMidiInputLabel;
 
 		double visActualWidth;
 		double visActualHeight;
@@ -46,6 +51,8 @@ class MainContentComponent : public Component,
 		void start();
 
 		ScopedPointer<TextButton> addButton(String text, String name, Rectangle<int>  bounds, Colour colour);
+
+		ScopedPointer<ComboBox> addComboBox(StringArray optionList, String name, Rectangle<int>  bounds, Colour colour);
 
 		void buttonClicked(Button* button) override;
 
