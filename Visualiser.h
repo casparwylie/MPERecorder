@@ -29,10 +29,10 @@ class visNote : public Component
 		void paint(Graphics& g) override
 		{
 			int size = (notePressure * 100);
-			size = (size < 5) ? 5 : size;
-			int takeOff = noteTimbre * 255;
-
-			if (visType == "Spiral") { size = size / 5; }
+			
+            if (visType == "Spiral") { size = size / 6; }else{
+                size = (size < 5) ? 5 : size;
+            }
 		
 		/*	uint8 red = uint8(abs(255 * notePressure));
 			uint8 green = uint8(255- abs(255 * noteVelocity));
@@ -47,7 +47,7 @@ class visNote : public Component
 			float alpha = 1.0;
 			g.setColour(Colour(hue,saturation,brightness,alpha));
 			int xInBound = (int) ((150 / 2) - (size / 2));
-			g.drawEllipse(xInBound, 5, size,size - timbreChange*size, 10);
+			g.drawEllipse(xInBound, xInBound, size,size - timbreChange*size, 17);
 		}
 };
 
@@ -62,7 +62,7 @@ class Visualiser : public Component,
         int visBendSenSpiral = 400;
 		static const int noteBoundSize = 150;
 		int xSen = 37;
-		int timeSen = 1;
+		int timeSen = 3;
 		int timeCount = 0;
 		int noteFreq = 5;
 		int yPos = timeSen;
@@ -72,7 +72,7 @@ class Visualiser : public Component,
 		int startImgY = 0;
 		int startImgX = 10000;
 		int endImgY = 0;
-		int scrollStep = 200;
+		int scrollStep = 210;
 		int scrollLeftX = 0;
 		int latestNoteNum = 0;
 		int currOctave = 1;
@@ -82,7 +82,7 @@ class Visualiser : public Component,
 		float startNoteTimbre = 0;
 		float spiralStartY;
 		float spiralStartX;
-		static const int spiralNoteSizeDivider = 5;
+		static const int spiralNoteSizeDivider = 6;
 		String visType = "";
 		bool firstScrollX = true;
 		int spiralBearing;
